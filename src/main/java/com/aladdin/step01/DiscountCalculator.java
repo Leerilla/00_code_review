@@ -9,12 +9,13 @@ public class DiscountCalculator {
      */
     public double getBaseDiscountRate(String customerGrade) {
         // Java 17의 향상된 switch 문(Switch Expressions) 적용
-        return switch (customerGrade.toUpperCase()) {
+        double result = switch (customerGrade.toUpperCase()) {
             case "VIP" -> 0.20;
             case "GOLD" -> 0.10;
             case "NORMAL" -> 0.05;
             default -> 0.0;
         };
+        return result;
     }
 
     /**
