@@ -1,0 +1,8 @@
+name: "🚀 [Chapter 1] 실습 시작하기"
+description: "클릭하면 Chapter 1 코드리뷰 실습용 PR이 자동으로 생성됩니다."
+title: "[실습신청] Chapter 1: 코드리뷰 시작"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        하단의 Submit new issue 버튼을 누르면 약 10초 뒤에 실습용 PR이 생성되고 리뷰어로 할당됩니다!

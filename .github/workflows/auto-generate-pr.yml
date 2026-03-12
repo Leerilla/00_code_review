@@ -1,0 +1,45 @@
+name: Auto Generate Lab PR
+
+# '[실습신청]' 이라는 제목의 이슈가 생성되었을 때 동작
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  create_lab_pr:
+    if: startsWith(github.event.issue.title, '[실습신청]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Student Branch and PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STUDENT: ${{ github.actor }}
+        run: |
+          # 1. 강사가 미리 만들어둔 문제의 코드 브랜치(feature/step1-discount-logic)를 가져옴
+          git checkout feature/step1-discount-logic
+          
+          # 2. 학생 고유의 브랜치 생성 및 푸시
+          STUDENT_BRANCH="lab/step1-$STUDENT"
+          git checkout -b $STUDENT_BRANCH
+          git push origin $STUDENT_BRANCH
+          
+          # 3. Github CLI를 이용해 PR 생성 및 학생을 리뷰어로 지정 (--reviewer)
+          PR_URL=$(gh pr create \
+            --title "🚀 [실습] Chapter 1: $STUDENT 님, 리뷰를 부탁드립니다!" \
+            --body "안녕하세요 @$STUDENT 님! \n\n새로운 주문 할인율 계산 로직을 작성해 보았습니다. 바쁘시겠지만 코드 리뷰 부탁드립니다! 🙏 \n\n**[🎯 리뷰어 미션]** \n1. 논리적 결함(경계값 등) 및 성능 문제 파악 \n2. '우리' 중심의 화법 적용 \n3. 잘한 점 칭찬하기" \
+            --base main \
+            --head $STUDENT_BRANCH \
+            --reviewer $STUDENT)
+            
+          # 4. 생성된 이슈에 완료 코멘트를 달고 이슈를 닫음
+          gh issue comment ${{ github.event.issue.number }} --body "🎉 실습 준비가 완료되었습니다! \n\n👉 **[여기를 클릭하여 리뷰를 시작하세요]($PR_URL)**"
+          gh issue close ${{ github.event.issue.number }}
