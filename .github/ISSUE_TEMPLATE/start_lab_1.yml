@@ -5,4 +5,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        하단의 Submit new issue 버튼을 누르면 약 10초 뒤에 실습용 PR이 생성되고 리뷰어로 할당됩니다!
+        하단의 체크박스를 선택하고 **Submit new issue** 버튼을 누르면, 약 10초 뒤에 실습용 PR이 생성되고 여러분이 리뷰어로 할당됩니다!
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: "실습 진행 확인"
+      description: "준비가 되셨다면 아래 항목을 체크해 주세요."
+      options:
+        - label: "네, 코드리뷰 실습을 시작하겠습니다!"
+          required: true
