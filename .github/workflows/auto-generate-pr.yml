@@ -24,11 +24,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STUDENT: ${{ github.actor }}
         run: |
-          # 1. 강사가 미리 만들어둔 문제의 코드 브랜치(feature/step1-discount-logic)를 가져옴
-          git checkout feature/step1-discount-logic
+          # 1. 강사가 미리 만들어둔 문제의 코드 브랜치(feature/step01-discount-logic)를 가져옴
+          git checkout feature/step01-discount-logic
           
           # 2. 학생 고유의 브랜치 생성 및 푸시
-          STUDENT_BRANCH="lab/step1-$STUDENT"
+          STUDENT_BRANCH="lab/step01-$STUDENT"
           git checkout -b $STUDENT_BRANCH
           git push origin $STUDENT_BRANCH
           
