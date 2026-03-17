@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   ai-feedback:
-    # 봇끼리 무한 대화하는 것을 방지
     if: github.event.comment.user.login != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -19,10 +18,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11' # Python 3.11로 업그레이드
 
       - name: Install dependencies
-        run: pip install google-generativeai requests
+        # 최신 구글 공식 패키지인 google-genai로 변경
+        run: pip install google-genai requests 
 
       - name: Run AI Feedback Script (Chapter-Specific)
         env:
@@ -36,7 +36,7 @@ jobs:
         run: |
           python -c "
           import os, json, requests
-          import google.generativeai as genai
+          from google import genai
 
           gemini_key = os.environ.get('GEMINI_API_KEY')
           github_token = os.environ.get('GITHUB_TOKEN')
@@ -50,10 +50,9 @@ jobs:
               print('GEMINI API KEY is missing.')
               exit(1)
 
-          genai.configure(api_key=gemini_key)
-          model = genai.GenerativeModel('gemini-1.5-pro')
+          # 최신 SDK 방식으로 클라이언트 초기화
+          client = genai.Client(api_key=gemini_key)
 
-          # 챕터별 맞춤 프롬프트 설정
           chapter_instruction = ''
           if 'chap01' in pr_labels:
               chapter_instruction = '''
@@ -78,10 +77,14 @@ jobs:
           답변은 한국어로, 학생을 칭찬하고 격려하는 톤으로 짧고 명확하게 마크다운으로 작성하세요.
           '''
 
-          response = model.generate_content(prompt)
+          # 최신 API 호출 방식
+          response = client.models.generate_content(
+              model='gemini-1.5-pro',
+              contents=prompt
+          )
+          
           reply_text = '🤖 **[AI 강사의 챕터 맞춤형 피드백]**\n\n' + response.text
 
-          # 대댓글 달기
           url = f'https://api.github.com/repos/{repo}/pulls/{pr_number}/comments/{comment_id}/replies'
           headers = {
               'Authorization': f'Bearer {github_token}',
