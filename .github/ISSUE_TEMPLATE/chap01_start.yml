@@ -8,3 +8,10 @@ body:
       value: |
         ## Chapter 1 실습을 시작합니다!
         아래 `Submit new issue` 버튼을 누르면, 약 30초 뒤에 **Pull Requests** 탭에 새로운 실습용 PR이 생성됩니다.
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: 실습 준비 완료
+      options:
+        - label: "네, 실습을 시작할 준비가 되었습니다! 🚀"
+          required: true
