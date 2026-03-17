@@ -1,0 +1,53 @@
+name: Auto PR Generator for Practice
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  create-pr:
+    if: contains(github.event.issue.labels.*.name, 'practice-start')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git Identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create Practice Branch & PR for Chapter 1
+        if: contains(github.event.issue.labels.*.name, 'chap01')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 학생 ID와 실행 번호를 조합해 고유 브랜치명 생성 (충돌 방지)
+          BRANCH_NAME="practice/chap01-${{ github.actor }}-${{ github.run_id }}"
+
+          # 서버에서 시나리오 브랜치를 가져와 분기
+          git checkout origin/scenario/chap01 -b $BRANCH_NAME
+          git push origin $BRANCH_NAME
+
+          # GitHub CLI로 PR 생성 (핵심: 라벨에 chap01을 붙여서 AI가 인식하게 함)
+          gh pr create \
+            --base main \
+            --head $BRANCH_NAME \
+            --title "🚀 [${{ github.actor }}] Chapter 1. 레거시 주문 로직 코드 리뷰하기" \
+            --label "chap01" \
+            --body "## 🎯 미션
+          1. 윗쪽의 \`Files changed\` 탭으로 이동합니다.
+          2. \`OrderService.java\` 코드의 + 버튼을 눌러 P-Labeling(P1~P5)과 질문형 화법을 적용해 리뷰를 남겨보세요.
+          3. \`Add single comment\`가 아닌 \`Start a review\` -> \`Submit review\`를 통해 코멘트를 달아주세요! (AI가 즉시 피드백을 줍니다.)"
+
+      - name: Close Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh issue close ${{ github.event.issue.number }} --comment "PR이 성공적으로 생성되었습니다! 상단의 Pull Requests 탭을 확인해주세요."

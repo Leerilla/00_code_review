@@ -1,0 +1,97 @@
+name: AI Review Comment Feedback
+
+on:
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  ai-feedback:
+    # 봇끼리 무한 대화하는 것을 방지
+    if: github.event.comment.user.login != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install google-generativeai requests
+
+      - name: Run AI Feedback Script (Chapter-Specific)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_ID: ${{ github.event.comment.id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ', ') }}
+        run: |
+          python -c "
+          import os, json, requests
+          import google.generativeai as genai
+
+          gemini_key = os.environ.get('GEMINI_API_KEY')
+          github_token = os.environ.get('GITHUB_TOKEN')
+          repo = os.environ.get('REPO')
+          comment_body = os.environ.get('COMMENT_BODY')
+          comment_id = os.environ.get('COMMENT_ID')
+          pr_number = os.environ.get('PR_NUMBER')
+          pr_labels = os.environ.get('PR_LABELS', '')
+
+          if not gemini_key:
+              print('GEMINI API KEY is missing.')
+              exit(1)
+
+          genai.configure(api_key=gemini_key)
+          model = genai.GenerativeModel('gemini-1.5-pro')
+
+          # 챕터별 맞춤 프롬프트 설정
+          chapter_instruction = ''
+          if 'chap01' in pr_labels:
+              chapter_instruction = '''
+              [평가 기준: Chapter 1. 마인드셋과 커뮤니케이션]
+              1. 자아 없는 프로그래밍: '너/당신'을 탓하지 않고 '코드/우리'를 주어로 다루었는가?
+              2. Socratic 질문법: 명령조(~하세요)가 아니라 질문형(~어떨까요?)으로 작성되었는가?
+              3. P-Labeling: 코멘트에 P1~P5 라벨을 명시하여 강제성을 표현했는가?
+              위 3가지를 집중적으로 평가하고, 잘한 점과 개선할 점을 알려주세요. 기술적인 코드 로직 수정 제안은 하지 마세요.
+              '''
+          else:
+              chapter_instruction = '일반적인 코드 리뷰 가이드라인(친절함, 명확성, 객관성)에 따라 피드백해주세요.'
+
+          prompt = f'''
+          당신은 코드 리뷰 커뮤니케이션을 가르치는 친절한 시니어 엔지니어입니다.
+          아래는 수강생이 동료의 코드에 남긴 '코드 리뷰 피드백 코멘트'입니다.
+
+          [수강생의 코멘트]
+          \"{comment_body}\"
+
+          {chapter_instruction}
+
+          답변은 한국어로, 학생을 칭찬하고 격려하는 톤으로 짧고 명확하게 마크다운으로 작성하세요.
+          '''
+
+          response = model.generate_content(prompt)
+          reply_text = '🤖 **[AI 강사의 챕터 맞춤형 피드백]**\n\n' + response.text
+
+          # 대댓글 달기
+          url = f'https://api.github.com/repos/{repo}/pulls/{pr_number}/comments/{comment_id}/replies'
+          headers = {
+              'Authorization': f'Bearer {github_token}',
+              'Accept': 'application/vnd.github.v3+json'
+          }
+          payload = {'body': reply_text}
+          res = requests.post(url, headers=headers, json=payload)
+
+          if res.status_code == 201:
+              print('Feedback sent successfully.')
+          else:
+              print(f'Error: {res.status_code}, {res.text}')
+          "

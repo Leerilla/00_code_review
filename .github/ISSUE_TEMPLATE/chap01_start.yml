@@ -1,0 +1,10 @@
+name: "🚀 Chapter 1 실습 시작하기"
+description: "버튼을 누르면 첫 번째 코드 리뷰 실습용 PR이 자동으로 생성됩니다."
+title: "[Chap01] 코드 리뷰 커뮤니케이션 실습"
+labels: ["practice-start", "chap01"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Chapter 1 실습을 시작합니다!
+        아래 `Submit new issue` 버튼을 누르면, 약 30초 뒤에 **Pull Requests** 탭에 새로운 실습용 PR이 생성됩니다.
