@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   create-pr:
-    if: contains(github.event.issue.labels.*.name, 'practice-start')
+    if: contains(github.event.issue.title, '[Chap01]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -25,7 +25,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Create Practice Branch & PR for Chapter 1
-        if: contains(github.event.issue.labels.*.name, 'chap01')
+        if: contains(github.event.issue.title, '[Chap01]')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
